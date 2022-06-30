@@ -1,0 +1,1 @@
+CREATE TABLE `nodejs_troopers`.`creation-jobs` ( `id` BIGINT NOT NULL AUTO_INCREMENT , `company_name` VARCHAR(255) NOT NULL , `job_name` VARCHAR(255) NOT NULL , `job_type` VARCHAR(255) NOT NULL , `description` TEXT NOT NULL , `working_place` TEXT NOT NULL , `status` VARCHAR(255) NOT NULL DEFAULT 'active' , PRIMARY KEY (`id`)) ENGINE = InnoDB;

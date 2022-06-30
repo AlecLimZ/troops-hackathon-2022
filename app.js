@@ -1,6 +1,9 @@
 const express = require('express');
+const exphbs = require('express-handlebars');
 //const bodyParser = require('body-parser');
 const mysql = require('mysql');
+
+require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 5555;
@@ -12,119 +15,36 @@ app.use(express.urlencoded(
 ));
 app.use(express.json());
 
+// path to folder 'public' (static files)
+app.use(express.static('public'));
 
+//Templating Engine
+app.engine('hbs', exphbs.engine(
+    {
+        extname: '.hbs'
+    }
+));
+app.set('view engine', 'hbs');
 
-//MySQL
+//Connection Pool
 const pool = mysql.createPool(
     {
-        connectionLimit :   10,
-        host            :   'sql212.epizy.com',
-        user            :   'epiz_32069568',
-        password        :   'AnWE1QWoyaoWt',
-        database        :   'epiz_32069568_troopers'
+        connectionLimit :   100,
+        host            :   process.env.DB_HOST,
+        user            :   process.env.DB_USER,
+        password        :   process.env.DB_PASS,
+        database        :   process.env.DB_NAME
     }
 );
 
-app.get('', (req, res) => {
-
-    pool.getConnection((err, connection) => {
-        if (err) throw err
-        console.log(`connected as id ${connection.threadId}`)
-
-        connection.query('SELECT * from jobs', (err, rows) =>
-        {
-            connection.release()
-
-            if (!err)
-                res.send(rows);
-            else
-                console.log(err);
-        })
-    })
+// Connect to DB
+pool.getConnection((err, connection) =>
+{
+    if(err) throw err;
+    console.log('Connected as ID' + connection.threadId);
 });
 
-// Get by ID
-app.get('/:id', (req, res) => {
-
-    pool.getConnection((err, connection) => {
-        if (err) throw err
-        console.log(`connected as id ${connection.threadId}`)
-
-        connection.query('SELECT * from jobs WHERE id = ?', [req.params.id], (err, rows) =>
-        {
-            connection.release()
-
-            if (!err)
-                res.send(rows);
-            else
-                console.log(err);
-        })
-    })
-});
-
-// Delete a records
-app.delete('/:id', (req, res) => {
-
-    pool.getConnection((err, connection) => {
-        if (err) throw err
-        console.log(`connected as id ${connection.threadId}`)
-
-        connection.query('DELETE from jobs WHERE id =?', [req.params.id], (err, rows) =>
-        {
-            connection.release()
-
-            if (!err)
-                res.send(`Job ID ${req.params.id} has been removed.`);
-            else
-                console.log(err);
-        })
-    })
-});
-
-// Add a job
-app.post('', (req, res) => {
-
-    pool.getConnection((err, connection) => {
-        if (err) throw err
-        console.log(`connected as id ${connection.threadId}`)
-
-        const params = req.body
-
-        connection.query('INSERT INTO jobs SET ?', params, (err, rows) =>
-        {
-            connection.release()
-
-            if (!err)
-                res.send(`Company name ${params.company_name} has been added.`);
-            else
-                console.log(err);
-        })
-    })
-
-    console.log(req.body)
-});
-
-//update post
-app.put('', (req, res) => {
-
-    pool.getConnection((err, connection) => {
-        if (err) throw err
-        console.log(`connected as id ${connection.threadId}`)
-
-        const { id, company_name, job_req, description, image} = req.body
-
-        connection.query('UPDATE jobs SET company_name = ?, job_req = ?, description = ?, image = ? WHERE id = ?', [company_name, job_req, description, image, id], (err, rows) =>
-        {
-            connection.release()
-
-            if (!err)
-                res.send(`Company name ${company_name} has been updated.`);
-            else
-                console.log(err);
-        })
-    })
-
-    console.log(req.body)
-});
+const routes = require('./server/routes/user');
+app.use('/', routes);
 
 app.listen(port, () => console.log(`Listen on port ${port}`));
